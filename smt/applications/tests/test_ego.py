@@ -82,6 +82,33 @@ class TestEGO(SMTestCase):
         )
         self.assertAlmostEqual(0.39, float(y_opt), delta=1)
 
+    def test_branin_2D_MS(self):
+        n_iter = 5
+        fun = Branin(ndim=2)
+        xlimits = fun.xlimits
+        criterion = "UCB"  #'EI' or 'SBO' or 'UCB'
+
+        options = {
+            'corr': "squar_exp",
+            'poly': "constant",
+            'theta0': [1],
+            'theta_min': [1e-2],
+            'theta_max': [10]
+        }
+
+        xdoe = FullFactorial(xlimits=xlimits)(10)
+        ego = EGO_MS(xdoe=xdoe, n_iter=n_iter, n_sample=6, n_start=2, plot=True, criterion=criterion, xlimits=xlimits, krgoptions=options)
+
+        x_opt, y_opt, _, _, _, _, _ = ego.optimize(fun=fun)
+
+        # 3 optimal points possible: [-pi,12.275], [pi, 12.275], [9.42478,2.475]
+        self.assertTrue(
+            np.allclose([[-3.14, 12.275]], x_opt, rtol=0.1)
+            or np.allclose([[3.14, 2.275]], x_opt, rtol=0.1)
+            or np.allclose([[9.42, 2.475]], x_opt, rtol=0.1)
+        )
+        self.assertAlmostEqual(0.39, float(y_opt), delta=1)
+        
     def test_ydoe_option(self):
         n_iter = 10
         fun = Branin(ndim=2)
