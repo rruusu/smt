@@ -243,5 +243,5 @@ class EGO_MS(SurrogateBasedApplication):
         """ Blind prediction: Assume value at upper confidence bound mu + 3*sigma """
         pred = self.gpr.predict_values(point)
         var = self.gpr.predict_variances(point)
-        res = pred + 3.0 * np.sqrt(var)
+        res = pred + 1.0 * np.sqrt(var)
         return res
