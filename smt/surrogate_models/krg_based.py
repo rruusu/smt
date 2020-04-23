@@ -69,6 +69,12 @@ class KrgBased(SurrogateModel):
         declare(
             "theta0", [1e-2], types=(list, np.ndarray), desc="Initial hyperparameters"
         )
+        declare(
+            "theta_min", [1e-4], types=(list, np.ndarray), desc="Lower bounds for hyperparameters"
+        )
+        declare(
+            "theta_max", [100], types=(list, np.ndarray), desc="Upper bounds for hyperparameters"
+        )
         self.name = "KrigingBased"
         self.best_iteration_fail = None
         self.nb_ill_matrix = 5
@@ -442,8 +448,8 @@ class KrgBased(SurrogateModel):
             )
 
             for i in range(len(self.options["theta0"])):
-                constraints.append(lambda log10t, i=i: log10t[i] - np.log10(1e-6))
-                constraints.append(lambda log10t, i=i: np.log10(100) - log10t[i])
+                constraints.append(lambda log10t, i=i: log10t[i] - np.log10(self.theta_min))
+                constraints.append(lambda log10t, i=i: np.log10(self.theta_max) - log10t[i])
 
             self.D = self._componentwise_distance(D, opt=ii)
 
@@ -478,36 +484,18 @@ class KrgBased(SurrogateModel):
                             if incr != 0:
                                 return
                         else:
-                            if optimal_rlf_value >= self.best_iteration_fail:
                             if optimal_rlf_value > best_optimal_rlf_value:
                                 best_optimal_rlf_value = optimal_rlf_value
                                 best_optimal_par = optimal_par
                                 best_optimal_theta = optimal_theta
-                    else:
-                                    if (
-                                        self.best_iteration_fail
-                                        > best_optimal_rlf_value
-                                    ):
-                                        best_optimal_theta = self._thetaMemory
-                                        best_optimal_rlf_value, best_optimal_par = self._reduced_likelihood_function(
-                                            theta=best_optimal_theta
-                                        )
                     else:
                         if np.isinf(optimal_rlf_value):
                             stop += 1
                         else:
-                            if optimal_rlf_value >= self.best_iteration_fail:
                             if optimal_rlf_value > best_optimal_rlf_value:
                                 best_optimal_rlf_value = optimal_rlf_value
                                 best_optimal_par = optimal_par
                                 best_optimal_theta = optimal_theta
-
-                            else:
-                                if self.best_iteration_fail > best_optimal_rlf_value:
-                                    best_optimal_theta = self._thetaMemory.copy()
-                                    best_optimal_rlf_value, best_optimal_par = self._reduced_likelihood_function(
-                                        theta=best_optimal_theta
-                                    )
                     k += 1
                 except ValueError as ve:
                     # If iteration is max when fmin_cobyla fail is not reached
@@ -559,6 +547,15 @@ class KrgBased(SurrogateModel):
             d = self.options["n_comp"]
         else:
             d = self.nx
+
+        self.theta_min = np.asarray(self.options["theta_min"])
+        self.theta_max = np.asarray(self.options["theta_max"])
+
+        if not np.all(np.less(self.theta_min, self.theta_max)):
+            raise ValueError(
+                "Lower limits (%s) for hyperparameters must be smaller than upper limits (%s)."
+                % (self.theta_min, self.theta_max)
+            )
 
         if len(self.options["theta0"]) != d:
             if len(self.options["theta0"]) == 1:
