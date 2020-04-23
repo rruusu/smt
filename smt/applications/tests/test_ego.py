@@ -11,14 +11,20 @@ import unittest
 import numpy as np
 from sys import argv
 import matplotlib
+from math import pi
 
 matplotlib.use("Agg")
 
-from smt.applications import EGO
+from smt.applications import EGO, EGO_MS
 from smt.utils.sm_test_case import SMTestCase
 from smt.problems import Branin, Rosenbrock
-from smt.sampling_methods import FullFactorial
+from smt.sampling_methods import FullFactorial, LHS
 
+def rastrigin(xs):
+    xs = np.atleast_2d(xs)
+    (_,n) = xs.shape
+    s2 = 1/np.sqrt(2.0)
+    return 10 * n + np.sum(xs**2 - 10 * np.cos(2*pi*xs), axis=1)
 
 class TestEGO(SMTestCase):
     """
@@ -122,6 +128,36 @@ class TestEGO(SMTestCase):
         _, y_opt, _, _, _, _, y_doe = ego.optimize(fun=fun)
 
         self.assertAlmostEqual(0.39, float(y_opt), delta=1)
+
+    def test_rastrigin_2D(self):
+        n_iter = 100
+        ndim = 2
+        fun = rastrigin
+        xlimits = np.zeros((ndim, 2))
+        xlimits[:,0] = -5
+        xlimits[:,1] = 5
+
+        xdoe = LHS(xlimits=xlimits, criterion="ese")(10)
+        ydoe = fun(xdoe)
+
+        print(xdoe)
+        print(ydoe)
+
+        criterion = 'UCB'
+
+        options = {
+            'corr': "matern_5_2",
+            'poly': "constant",
+            'theta0': [0.05],
+            'theta_min': [1e-2],
+            'theta_max': [10]
+        }
+
+        ego = EGO_MS(xdoe=xdoe,ydoe=ydoe, n_iter=n_iter, n_sample=1, n_start=2, plot=True, criterion=criterion, xlimits=xlimits, krgoptions=options)
+        x_opt, y_opt, _, _, _, _, _ = ego.optimize(fun=fun)
+
+        print(x_opt)
+        print(y_opt)
 
     @staticmethod
     def run_ego_example():
