@@ -18,6 +18,8 @@ from types import FunctionType
 from scipy.stats import norm
 from scipy.optimize import minimize
 
+import matplotlib.pyplot as pyplot
+
 from smt.utils.options_dictionary import OptionsDictionary
 from smt.applications.application import SurrogateBasedApplication
 from smt.utils.misc import compute_rms_error
@@ -31,6 +33,7 @@ class EGO_MS(SurrogateBasedApplication):
         super(EGO_MS, self)._initialize()
         declare = self.options.declare
 
+        declare("plot", False, types=bool, desc="Plot intermediate results")
         declare("fun", None, types=FunctionType, desc="Function to minimize")
         declare(
             "criterion",
@@ -121,6 +124,11 @@ class EGO_MS(SurrogateBasedApplication):
         n_start = self.options["n_start"]
         n_max_optim = self.options["n_max_optim"]
 
+        plot = self.options["plot"]
+        if plot:
+            x = [np.linspace(bounds[i,0], bounds[i,1], 201) for i in range(0,nx)]
+            grid_x, grid_y = np.meshgrid(*x)
+
         for k in range(n_iter):
             x_sample = np.empty(shape=(0, nx))
             x_data_tmp = np.copy(x_data)
@@ -136,6 +144,18 @@ class EGO_MS(SurrogateBasedApplication):
                     self.obj_k = lambda x: self.SBO(np.atleast_2d(x))
                 elif criterion == "UCB":
                     self.obj_k = lambda x: self.UCB(np.atleast_2d(x))
+
+                if plot:
+                    x_tmp = np.vstack((np.ravel(grid_x), np.ravel(grid_y))).T
+                    grid_z = np.reshape(self.gpr.predict_values(x_tmp), grid_x.shape)
+                    #grid_z = np.reshape(self.obj_k(x_tmp), grid_x.shape)
+                    grid_z2 = np.reshape(fun(x_tmp), grid_x.shape)
+                    pyplot.clf()
+                    lvls = np.linspace(np.sqrt(np.min(grid_z2)), np.sqrt(np.max(grid_z2)), 10)**2
+                    pyplot.contour(grid_x, grid_y, grid_z, lvls)
+                    pyplot.contour(grid_x, grid_y, grid_z2, lvls)
+                    pyplot.scatter(x_data_tmp[:,0], x_data_tmp[:,1])
+                    pyplot.savefig('test.png')
 
                 success = False
                 n_optim = 1  # in order to have some success optimizations with SLSQP
