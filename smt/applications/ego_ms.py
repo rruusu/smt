@@ -16,7 +16,7 @@ import numpy as np
 from types import FunctionType
 
 from scipy.stats import norm
-from scipy.optimize import minimize
+from scipy.optimize import minimize, shgo
 
 import matplotlib.pyplot as pyplot
 
@@ -164,12 +164,11 @@ class EGO_MS(SurrogateBasedApplication):
                     x_start = sampling(n_start)
                     for ii in range(n_start):
                         opt_all.append(
-                            minimize(
+                            shgo(
                                 self.obj_k,
-                                x_start[ii, :],
-                                method="SLSQP",
                                 bounds=bounds,
-                                options={"maxiter": 200},
+                                options={'f_tol': 1e-6, 'disp': False},
+                                sampling_method='sobol'
                             )
                         )
 
