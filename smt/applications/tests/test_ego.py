@@ -144,7 +144,7 @@ class TestEGO(SMTestCase):
             ego.gpr.train()
 
             y_gp_plot = ego.gpr.predict_values(x_plot)
-            y_gp_plot_var = ego.gpr.predict_variances(x_plot)
+            y_gp_plot_var = np.sqrt(ego.gpr.predict_variances(x_plot))
             y_ei_plot = -ego.EI(x_plot, y_data_k)
 
             ax = fig.add_subplot((n_iter + 1) // 2, 2, i + 1)
