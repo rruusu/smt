@@ -55,6 +55,12 @@ class EGO_MS(SurrogateBasedApplication):
             types=int,
             desc="Number of points of the initial LHS doe, only used if xdoe is not given",
         )
+        declare(
+            "krgoptions",
+            {},
+            types=dict,
+            desc="Kriging model options",
+        )
         declare("xdoe", None, types=np.ndarray, desc="Initial doe inputs")
         declare("ydoe", None, types=np.ndarray, desc="Initial doe outputs")
         declare("xlimits", None, types=np.ndarray, desc="Bounds of function fun inputs")
@@ -104,7 +110,8 @@ class EGO_MS(SurrogateBasedApplication):
 
         _, nx = np.shape(x_data)
 
-        self.gpr = KRG(print_global=False)
+        #self.gpr = KRG(print_global=False)
+        self.gpr = KRG(print_global=False, **self.options["krgoptions"])
 
         bounds = xlimits
 
