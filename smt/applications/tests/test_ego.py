@@ -158,6 +158,36 @@ class TestEGO(SMTestCase):
 
         print(x_opt)
         print(y_opt)
+    
+    def test_rastrigin_2D_10(self):
+        n_iter = 10
+        ndim = 2
+        fun = rastrigin
+        xlimits = np.zeros((ndim, 2))
+        xlimits[:,0] = -5
+        xlimits[:,1] = 5
+
+        xdoe = LHS(xlimits=xlimits, criterion="ese")(10)
+        ydoe = fun(xdoe)
+
+        print(xdoe)
+        print(ydoe)
+
+        criterion = 'UCB'
+
+        options = {
+            'corr': "matern_5_2",
+            'poly': "constant",
+            'theta0': [0.05],
+            'theta_min': [1e-2],
+            'theta_max': [10]
+        }
+
+        ego = EGO_MS(xdoe=xdoe,ydoe=ydoe, n_iter=n_iter, n_sample=10, n_start=2, plot=True, criterion=criterion, xlimits=xlimits, krgoptions=options)
+        x_opt, y_opt, _, _, _, _, _ = ego.optimize(fun=fun)
+
+        print(x_opt)
+        print(y_opt)
 
     @staticmethod
     def run_ego_example():
