@@ -186,7 +186,7 @@ class KrgBased(SurrogateModel):
         par = {}
         # Set up R
         MACHINE_EPSILON = np.finfo(np.double).eps
-        nugget = 10.0 * MACHINE_EPSILON
+        nugget = 100.0 * MACHINE_EPSILON
         if self.name == "MFK":
             if self._lvl != self.nlvl:
                 # in the case of multi-fidelity optimization
@@ -432,7 +432,7 @@ class KrgBased(SurrogateModel):
         def minus_reduced_likelihood_function(log10t):
             return -self._reduced_likelihood_function(theta=10.0 ** log10t)[0]
 
-        limit, _rhobeg = 10 * len(self.options["theta0"]), 0.5
+        limit, _rhobeg = 1000 * len(self.options["theta0"]), 0.5
         exit_function = False
         if self.name == "KPLSK":
             n_iter = 1
@@ -471,7 +471,7 @@ class KrgBased(SurrogateModel):
                         np.log10(theta0),
                         constraints,
                         rhobeg=_rhobeg,
-                        rhoend=1e-4,
+                        rhoend=1e-6,
                         maxfun=limit,
                     )
                     optimal_rlf_value, optimal_par = self._reduced_likelihood_function(
