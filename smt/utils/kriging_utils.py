@@ -109,6 +109,79 @@ def l1_cross_distances(X):
 
     return D, ij.astype(np.int)
 
+def matern_3_2(theta, d):
+
+    """
+    Matern{3/2} correlation model.
+
+    Parameters
+    ----------
+    theta : list[ncomp]
+        the autocorrelation parameter(s).
+
+    d: np.ndarray[n_obs * (n_obs - 1) / 2, n_comp]
+        |d_i * coeff_pls_i| if PLS is used, |d_i| otherwise
+
+    Returns
+    -------
+    r: np.ndarray[n_obs * (n_obs - 1) / 2,1]
+        An array containing the values of the autocorrelation model.
+    """
+
+    r = np.zeros((d.shape[0], 1))
+    n_components = d.shape[1]
+
+    # Construct/split the correlation matrix
+    i, nb_limit = 0, int(1e4)
+
+    s3 = np.sqrt(3)
+    while True:
+        if i * nb_limit > d.shape[0]:
+            return r
+        else:
+            dx = theta.reshape(1, n_components) * d[i * nb_limit : (i + 1) * nb_limit, :]
+            x = np.prod((1 + s3 * dx) * np.exp(-s3 * dx),
+                axis=1,
+            )
+            r[i * nb_limit : (i + 1) * nb_limit, 0] = x
+            i += 1
+
+def matern_5_2(theta, d):
+
+    """
+    Matern{5/2} correlation model.
+
+    Parameters
+    ----------
+    theta : list[ncomp]
+        the autocorrelation parameter(s).
+
+    d: np.ndarray[n_obs * (n_obs - 1) / 2, n_comp]
+        |d_i * coeff_pls_i| if PLS is used, |d_i| otherwise
+
+    Returns
+    -------
+    r: np.ndarray[n_obs * (n_obs - 1) / 2,1]
+        An array containing the values of the autocorrelation model.
+    """
+
+    r = np.zeros((d.shape[0], 1))
+    n_components = d.shape[1]
+
+    # Construct/split the correlation matrix
+    i, nb_limit = 0, int(1e4)
+
+    s5 = np.sqrt(5)
+    while True:
+        if i * nb_limit > d.shape[0]:
+            return r
+        else:
+            dx = theta.reshape(1, n_components) * d[i * nb_limit : (i + 1) * nb_limit, :]
+            x = np.prod((1 + s5*dx + 5*dx**2/3) * np.exp(-s5 * dx),
+                axis=1,
+            )
+            r[i * nb_limit : (i + 1) * nb_limit, 0] = x
+            i += 1
 
 def abs_exp(theta, d):
 

@@ -26,6 +26,8 @@ from smt.utils.kriging_utils import constant, linear, quadratic
 from smt.utils.kriging_utils import (
     abs_exp,
     squar_exp,
+    matern_3_2,
+    matern_5_2,
     standardization,
     l1_cross_distances,
 )
@@ -41,7 +43,7 @@ class KrgBased(SurrogateModel):
 
     _regression_types = {"constant": constant, "linear": linear, "quadratic": quadratic}
 
-    _correlation_types = {"abs_exp": abs_exp, "squar_exp": squar_exp}
+    _correlation_types = {"abs_exp": abs_exp, "squar_exp": squar_exp, "matern_5_2": matern_5_2, "matern_3_2": matern_3_2}
 
     def _initialize(self):
         super(KrgBased, self)._initialize()
@@ -56,7 +58,7 @@ class KrgBased(SurrogateModel):
         declare(
             "corr",
             "squar_exp",
-            values=("abs_exp", "squar_exp"),
+            values=("abs_exp", "squar_exp", "matern_3_2", "matern_5_2"),
             desc="Correlation function type",
         )
         declare(
@@ -477,11 +479,11 @@ class KrgBased(SurrogateModel):
                                 return
                         else:
                             if optimal_rlf_value >= self.best_iteration_fail:
-                                if optimal_rlf_value > best_optimal_rlf_value:
-                                    best_optimal_rlf_value = optimal_rlf_value
-                                    best_optimal_par = optimal_par
-                                    best_optimal_theta = optimal_theta
-                                else:
+                            if optimal_rlf_value > best_optimal_rlf_value:
+                                best_optimal_rlf_value = optimal_rlf_value
+                                best_optimal_par = optimal_par
+                                best_optimal_theta = optimal_theta
+                    else:
                                     if (
                                         self.best_iteration_fail
                                         > best_optimal_rlf_value
@@ -495,10 +497,10 @@ class KrgBased(SurrogateModel):
                             stop += 1
                         else:
                             if optimal_rlf_value >= self.best_iteration_fail:
-                                if optimal_rlf_value > best_optimal_rlf_value:
-                                    best_optimal_rlf_value = optimal_rlf_value
-                                    best_optimal_par = optimal_par
-                                    best_optimal_theta = optimal_theta
+                            if optimal_rlf_value > best_optimal_rlf_value:
+                                best_optimal_rlf_value = optimal_rlf_value
+                                best_optimal_par = optimal_par
+                                best_optimal_theta = optimal_theta
 
                             else:
                                 if self.best_iteration_fail > best_optimal_rlf_value:
