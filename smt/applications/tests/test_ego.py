@@ -183,7 +183,7 @@ class TestEGO(SMTestCase):
             'theta_max': [10]
         }
 
-        ego = EGO_MS(xdoe=xdoe,ydoe=ydoe, n_iter=n_iter, n_sample=10, n_start=2, plot=True, criterion=criterion, xlimits=xlimits, krgoptions=options)
+        ego = EGO_MS(xdoe=xdoe,ydoe=ydoe, n_iter=n_iter, n_sample=10, n_start=1, plot=True, criterion=criterion, xlimits=xlimits, krgoptions=options)
         x_opt, y_opt, _, _, _, _, _ = ego.optimize(fun=fun)
 
         print(x_opt)
