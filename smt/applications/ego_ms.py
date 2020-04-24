@@ -161,7 +161,7 @@ class EGO_MS(SurrogateBasedApplication):
                 n_optim = 1  # in order to have some success optimizations with SLSQP
                 while not success and n_optim <= n_max_optim:
                     opt_all = []
-                    x_start = sampling(n_start)
+                    x_start = sampling(max(2,n_start))[0:n_start,:]
                     for ii in range(n_start):
                         opt_all.append(
                             shgo(
