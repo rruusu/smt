@@ -208,6 +208,147 @@ class EGO_MS(SurrogateBasedApplication):
 
         return x_opt, y_opt, ind_best, x_data, y_data, x_doe, y_doe
 
+    def initialize(self, x_data, y_data):
+        self.xlimits = self.options["xlimits"]
+        self.sampling = LHS(xlimits=self.xlimits, criterion="ese")
+
+        self.x_data = np.atleast_2d(x_data)
+        self.y_data = np.atleast_2d(y_data)
+        if self.y_data.shape[0] == 1:
+            self.y_data = self.y_data.T
+
+        nx = self.x_data.shape[0]
+        self.y_valid = np.zeros(nx, 'bool')
+
+        self.gpr = KRG(print_global=False, **self.options["krgoptions"])
+
+    def get_candidate(self):
+        """
+        Get a new x values for model evaluation
+
+        Performs an optimization to find an optimal candidate for model
+        evaluation. The surrogate model data is augmented with an estimate
+        of the model output value and the input values are returned for actual
+        model evaluation.
+
+        The caller should evaluate the actual objective function at the
+        returned input values and then call update_model() to update the
+        surrogate model with the actual model output.
+
+        Any number of get_candidate() calls can be made in between calls to
+        update_model(). Until the actual model output is provided, the estimate
+        that was made by the call to get_candidate() is kept as a sample value
+        for the surrogate model.
+        """
+        x_data_tmp = np.copy(self.x_data)
+        y_data_tmp = np.copy(self.y_data)
+
+        print((x_data_tmp, y_data_tmp))
+
+        self.gpr.set_training_values(x_data_tmp, y_data_tmp)
+        self.gpr.train()
+
+        criterion = self.options["criterion"]
+        n_start = self.options["n_start"]
+        n_max_optim = self.options["n_max_optim"]
+
+        if criterion == "EI":
+            self.obj_k = lambda x: -self.EI(np.atleast_2d(x), y_data_tmp)
+        elif criterion == "SBO":
+            self.obj_k = lambda x: self.SBO(np.atleast_2d(x))
+        elif criterion == "UCB":
+            self.obj_k = lambda x: self.UCB(np.atleast_2d(x))
+
+        success = False
+        n_optim = 1  # in order to have some success optimizations with SLSQP
+        while not success and n_optim <= n_max_optim:
+            opt_all = []
+            x_start = self.sampling(max(2,n_start))[0:n_start,:]
+            for ii in range(n_start):
+                opt_all.append(
+                    shgo(
+                        self.obj_k,
+                        bounds=self.xlimits,
+                        options={'f_tol': 1e-6, 'disp': False},
+                        sampling_method='sobol'
+                    )
+                )
+
+            opt_all = np.asarray(opt_all)
+
+            opt_success = opt_all[[opt_i["success"] for opt_i in opt_all]]
+            obj_success = np.array([opt_i["fun"] for opt_i in opt_success])
+            success = obj_success.size != 0
+            if not success:
+                self.log("New start point for the internal optimization")
+                n_optim += 1
+
+        if n_optim >= n_max_optim:
+            self.log("Internal optimization failed at EGO")
+            return None
+        elif success:
+            self.log("Internal optimization succeeded at EGO")
+
+        ind_min = np.argmin(obj_success)
+        opt = opt_success[ind_min]
+        x_et_k = np.atleast_2d(opt["x"])
+        y_et_k_low = self.blind(np.atleast_2d(x_et_k))
+
+        y_data_tmp = np.append(y_data_tmp, y_et_k_low, axis=0)
+        x_data_tmp = np.append(x_data_tmp, x_et_k, axis=0)
+
+        self.x_data = x_data_tmp
+        self.y_data = y_data_tmp
+        self.y_valid = np.append(self.y_valid, False)
+
+        return x_et_k
+
+    def update_model(self, x_et_k, y_et_k):
+        """
+        Update the surrogate model with a new sample of the actual objective
+        function.
+
+        The collection of training samples for the surrogate model is updated
+        so that if an existing sample matches the x values, its y values are
+        updated to the given values. Otherwise a new sample point is added to
+        the training set.
+
+        This function should be called with a single sample at a time.
+        """
+        x_et_k = np.atleast_2d(x_et_k)
+        y_et_k = np.atleast_2d(y_et_k)
+
+        m = (self.x_data == x_et_k).all(axis = 1)
+        if not m.any():
+            # Add a new independent sample point
+            self.x_data = np.append(self.x_data, x_et_k, axis=0)
+            self.y_data = np.append(self.y_data, y_et_k, axis=0)
+            self.y_valid = np.append(self.y_valid, False)
+        else:
+            self.y_data[m,:] = y_et_k
+            self.y_valid[m] = True
+
+    def get_result(self):
+        """
+        Get optimization result
+
+        Returns a tuple of (
+            optimal x,
+            optimal y,
+            index of best sample,
+            x samples,
+            y samples
+        )
+        """
+        x_data = np.copy(self.x_data[self.y_valid,:])
+        y_data = np.copy(self.y_data[self.y_valid,:])
+
+        ind_best = np.argmin(y_data)
+        x_opt = x_data[ind_best]
+        y_opt = y_data[ind_best]
+
+        return x_opt, y_opt, ind_best, x_data, y_data
+
     def log(self, msg):
         if self.options["verbose"]:
             print(msg)

@@ -189,6 +189,48 @@ class TestEGO(SMTestCase):
         print(x_opt)
         print(y_opt)
 
+    def test_branin_2D_async(self):
+        n_iter = 30
+        n_sample = 5
+        fun = Branin(ndim=2)
+        xlimits = fun.xlimits
+        criterion = "UCB"  #'EI' or 'SBO' or 'UCB'
+
+        options = {
+            'corr': "squar_exp",
+            'poly': "constant",
+            'theta0': [1],
+            'theta_min': [1e-2],
+            'theta_max': [10]
+        }
+
+        xdoe = FullFactorial(xlimits=xlimits)(10)
+        ydoe = fun(xdoe)
+
+        ego = EGO_MS(xdoe=xdoe, n_iter=n_iter, n_sample=n_sample, n_start=2, plot=True, criterion=criterion, xlimits=xlimits, krgoptions=options)
+
+        ego.initialize(xdoe, ydoe)
+        samples = np.zeros((n_sample,2))
+        for i in range(0, n_sample):
+            samples[i,:] = ego.get_candidate()
+
+        for i in range(0, n_iter):
+            k = np.random.randint(n_sample)
+            x = np.atleast_2d(samples[k,:])
+            y = fun(x)
+            ego.update_model(x, y)
+            samples[k,:] = ego.get_candidate()
+
+        x_opt, y_opt, _, _, _ = ego.get_result()
+
+        # 3 optimal points possible: [-pi,12.275], [pi, 12.275], [9.42478,2.475]
+        self.assertTrue(
+            np.allclose([[-3.14, 12.275]], x_opt, rtol=0.1)
+            or np.allclose([[3.14, 2.275]], x_opt, rtol=0.1)
+            or np.allclose([[9.42, 2.475]], x_opt, rtol=0.1)
+        )
+        self.assertAlmostEqual(0.39, float(y_opt), delta=1)
+
     @staticmethod
     def run_ego_example():
         import numpy as np
