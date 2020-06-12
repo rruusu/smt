@@ -243,8 +243,6 @@ class EGO_MS(SurrogateBasedApplication):
         x_data_tmp = np.copy(self.x_data)
         y_data_tmp = np.copy(self.y_data)
 
-        print((x_data_tmp, y_data_tmp))
-
         self.gpr.set_training_values(x_data_tmp, y_data_tmp)
         self.gpr.train()
 
