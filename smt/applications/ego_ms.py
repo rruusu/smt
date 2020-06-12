@@ -18,7 +18,7 @@ from types import FunctionType
 from scipy.stats import norm
 from scipy.optimize import minimize, shgo
 
-import matplotlib.pyplot as pyplot
+# import matplotlib.pyplot as pyplot
 
 from smt.utils.options_dictionary import OptionsDictionary
 from smt.applications.application import SurrogateBasedApplication
@@ -145,17 +145,17 @@ class EGO_MS(SurrogateBasedApplication):
                 elif criterion == "UCB":
                     self.obj_k = lambda x: self.UCB(np.atleast_2d(x))
 
-                if plot:
-                    x_tmp = np.vstack((np.ravel(grid_x), np.ravel(grid_y))).T
-                    grid_z = np.reshape(self.gpr.predict_values(x_tmp), grid_x.shape)
-                    #grid_z = np.reshape(self.obj_k(x_tmp), grid_x.shape)
-                    grid_z2 = np.reshape(fun(x_tmp), grid_x.shape)
-                    pyplot.clf()
-                    lvls = np.linspace(np.sqrt(np.min(grid_z2)), np.sqrt(np.max(grid_z2)), 10)**2
-                    pyplot.contour(grid_x, grid_y, grid_z, lvls)
-                    pyplot.contour(grid_x, grid_y, grid_z2, lvls)
-                    pyplot.scatter(x_data_tmp[:,0], x_data_tmp[:,1])
-                    pyplot.savefig('test.png')
+                # if plot:
+                    # x_tmp = np.vstack((np.ravel(grid_x), np.ravel(grid_y))).T
+                    # grid_z = np.reshape(self.gpr.predict_values(x_tmp), grid_x.shape)
+                    # #grid_z = np.reshape(self.obj_k(x_tmp), grid_x.shape)
+                    # grid_z2 = np.reshape(fun(x_tmp), grid_x.shape)
+                    # pyplot.clf()
+                    # lvls = np.linspace(np.sqrt(np.min(grid_z2)), np.sqrt(np.max(grid_z2)), 10)**2
+                    # pyplot.contour(grid_x, grid_y, grid_z, lvls)
+                    # pyplot.contour(grid_x, grid_y, grid_z2, lvls)
+                    # pyplot.scatter(x_data_tmp[:,0], x_data_tmp[:,1])
+                    # pyplot.savefig('test.png')
 
                 success = False
                 n_optim = 1  # in order to have some success optimizations with SLSQP

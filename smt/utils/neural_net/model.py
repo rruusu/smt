@@ -7,7 +7,6 @@ This package is distributed under New BSD license.
 """
 
 import numpy as np
-import matplotlib.gridspec as gridspec
 from smt.utils.neural_net.data import random_mini_batches
 from smt.utils.neural_net.optimizer import Adam
 from smt.utils.neural_net.activation import Tanh, Linear
@@ -440,6 +439,7 @@ class Model(object):
         return J
 
     def goodness_of_fit(self, X_test, Y_test, J_test=None, response=0, partial=0):
+        import matplotlib.gridspec as gridspec
         import matplotlib.pyplot as plt
 
         assert X_test.shape[1] == Y_test.shape[1]
