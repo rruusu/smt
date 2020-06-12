@@ -266,6 +266,8 @@ class EGO_MS(SurrogateBasedApplication):
                 opt_all.append(
                     shgo(
                         self.obj_k,
+                        n=50,
+                        iters=5,
                         bounds=self.xlimits,
                         options={'f_tol': 1e-6, 'disp': False},
                         sampling_method='sobol'
